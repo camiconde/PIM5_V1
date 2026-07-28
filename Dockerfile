@@ -8,14 +8,16 @@ ENV PYTHONUNBUFFERED=1
 # Crear un directorio de trabajo
 WORKDIR /app
 
-# Crear un usuario no privilegiado por seguridad (Resuelve la alerta de root)
+# Crear un usuario no privilegiado por seguridad
 RUN adduser --disabled-password --gecos "" appuser
 
-# Copiar e instalar dependencias usando wheels binarios (Resuelve la alerta de --only-binary)
+# Copiar el archivo de dependencias
 COPY requirements.txt .
-RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt || pip install --no-cache-dir -r requirements.txt
 
-# Copiar únicamente los directorios y archivos estrictamente necesarios (Resuelve la copia recursiva)
+# Instalar dependencias usando únicamente paquetes binarios compilados
+RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt
+
+# Copiar directorios y archivos de la aplicación
 COPY src/ ./src/
 COPY models/ ./models/
 COPY Base_de_datos.xlsx .
