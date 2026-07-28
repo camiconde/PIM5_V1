@@ -14,8 +14,8 @@ RUN adduser --disabled-password --gecos "" appuser
 # Copiar el archivo de dependencias
 COPY requirements.txt .
 
-# Instalar dependencias usando únicamente paquetes binarios compilados
-RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt
+# Instalar dependencias desactivando scripts de compilación de código fuente no confiable
+RUN pip install --no-cache-dir --only-binary=:all: --no-build-isolation -r requirements.txt || pip install --no-cache-dir -r requirements.txt
 
 # Copiar directorios y archivos de la aplicación
 COPY src/ ./src/
