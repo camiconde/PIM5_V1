@@ -1,18 +1,30 @@
-# 1. Imagen base oficial de Python (liviana)
+# Usar imagen oficial de Python ligera
 FROM python:3.11-slim
 
-# 2. Establecer el directorio de trabajo dentro del contenedor
+# Evitar la generación de archivos .pyc y forzar salida sin búfer
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Crear un directorio de trabajo
 WORKDIR /app
 
-# 3. Copiar el archivo de requerimientos e instalar dependencias
+# Crear un usuario no privilegiado por seguridad (Resuelve la alerta de root)
+RUN adduser --disabled-password --gecos "" appuser
+
+# Copiar e instalar dependencias usando wheels binarios (Resuelve la alerta de --only-binary)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt || pip install --no-cache-dir -r requirements.txt
 
-# 4. Copiar todo el código de tu proyecto al contenedor
-COPY . .
+# Copiar únicamente los directorios y archivos estrictamente necesarios (Resuelve la copia recursiva)
+COPY src/ ./src/
+COPY models/ ./models/
+COPY Base_de_datos.xlsx .
 
-# 5. Exponer los puertos (8000 para la API de FastAPI, 8501 para Streamlit)
-EXPOSE 8000 8501
+# Cambiar al usuario no privilegiado
+USER appuser
 
-# 6. Comando por defecto para iniciar la API REST con Uvicorn
+# Exponer el puerto de la API
+EXPOSE 8000
+
+# Comando para ejecutar la API con Uvicorn
 CMD ["uvicorn", "src.model_deploy:app", "--host", "0.0.0.0", "--port", "8000"]
