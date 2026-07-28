@@ -1,67 +1,96 @@
-# PIM5_V1
-# 🏦 Modelo de Evaluación de Riesgo Crediticio & Monitoreo de Data Drift
+# 💳 Sistema de Evaluación e Inferencia de Riesgo Crediticio (PIM5)
 
-## 📌 Descripción del Proyecto
-Este proyecto implementa un flujo completo de Ciencia de Datos para predecir el comportamiento de pago de clientes crediticios, incorporando buenas prácticas de producción:
-- **Ingeniería de Características:** Creación de Ratios Financieros (*Ratio de Endeudamiento* y *Capacidad de Pago Disponible*).
-- **Prevención de Data Leakage:** Exclusión de saldos de mora concurrentes.
-- **Modelamiento:** Evaluación comparativa entre Regresión Logística, Random Forest y Gradient Boosting, resultando seleccionada la **Regresión Logística** (F1-Score: 0.9757).
-- **Monitoreo & Observabilidad:** Cálculo periódico de métricas de Data Drift (KS-Test, PSI, Jensen-Shannon, Chi-Cuadrado).
-- **Interfaz Interactiva:** Despliegue con Streamlit para inferencias en tiempo real y panel de monitoreo.
-
----
-## 📌 Resumen de Avances del Proyecto
-
-### 🔹 Avance 1: Análisis Exploratorio de Datos (EDA) y Comprensión del Negocio
-- **Exploración de la Cartera:** Se analizaron 10,763 registros históricos de créditos. Se identificó un desbalance de clases típico en riesgo financiero, con un **95.2%** de pagos a tiempo.
-- **Relaciones Financieras:** Se identificó que la capacidad de pago y el puntaje en burós crediticios (`puntaje_datacredito`) son los mejores predictores de cumplimiento.
-- **Detección de Data Leakage:** Se detectaron variables concurrentes al crédito (`saldo_mora`, `saldo_total`, `saldo_principal`) que reflejan el estado posterior del préstamo y debieron aislarse del modelo predictivo.
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=camiconde_PIM5_V1&metric=alert_status)](https://sonarcloud.io/summary/overall?id=camiconde_PIM5_V1)
+[![Quality Gate Security](https://sonarcloud.io/api/project_badges/measure?project=camiconde_PIM5_V1&metric=security_rating)](https://sonarcloud.io/summary/overall?id=camiconde_PIM5_V1)
+[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
+[![Container](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
 
 ---
 
-### 🔹 Avance 2: Ingeniería de Características, Modelado y Evaluación
-- **Ingeniería de Características:** Se crearon ratios financieros clave como el **Ratio de Endeudamiento** (`cuota_pactada / salario_cliente`) y la **Capacidad de Pago Disponible**.
-- **Pipelines y Preprocesamiento:** Se construyeron `Pipelines` con `ColumnTransformer` para automatizar el escalado de variables numéricas (`StandardScaler`) y la codificación de categóricas (`OneHotEncoder`).
-- **Entrenamiento y Selección:** Se evaluaron tres algoritmos (*Logistic Regression*, *Random Forest* y *Gradient Boosting*). La **Regresión Logística** fue seleccionada como el mejor modelo por su alto rendimiento (**F1-Score: 0.9757**) e interpretabilidad financiera.
-- **Serialización:** El pipeline y modelo final se exportaron en `models/model.pkl`.
+## 📌 Contexto de Negocio
+Este proyecto implementa una solución integral de **Machine Learning para la Evaluación del Riesgo Crediticio** en una entidad financiera. El objetivo principal es predecir la probabilidad de cumplimiento de pago (`Pago_atiempo`) en solicitudes de crédito para optimizar las decisiones de aprobación, reduciendo la tasa de morosidad y maximizando la colocación segura de capital.
 
 ---
 
-### 🔹 Avance 3: Monitoreo de Data Drift y Aplicación Interactiva
-- **Monitoreo de Población (Data Drift):** Se implementó el módulo `src/model_monitoring.py` para calcular métricas estadísticas de variación entre la población histórica y la actual (**KS-Test**, **PSI**, **Jensen-Shannon** y **Chi-Cuadrado**).
-- **Dashboard en Streamlit:** Se desarrolló la aplicación interactiva (`app.py`) con tres secciones:
-  1. *Evaluador de solicitudes en tiempo real.*
-  2. *Panel visual de monitoreo de drift con semáforos e indicadores.*
-  3. *Recomendaciones automáticas de re-entrenamiento (retraining).*
-  
+## 📊 Principales Hallazgos del EDA (Avance 1)
+* **Desbalance de Clases:** Se identificó que aproximadamente el **95.2%** de los registros corresponden a pagos a tiempo, mientras que un **4.8%** corresponde a incumplimientos. Se priorizó el uso de métricas como **ROC-AUC**, **F1-Score** y **Precision-Recall** sobre el *Accuracy*.
+* **Capacidad de Pago:** Existe una clara correlación entre una cuota pactada superior al **35%-40% del salario mensual** del cliente y el incremento en el riesgo de mora.
+* **Historial Crediticio:** El puntaje de buró (`puntaje_datacredito`) presenta una mediana significativamente mayor (>700 puntos) en el grupo de cumplimiento respecto al de mora (<550 puntos).
+* **Prevención de Data Leakage:** Se identificaron y excluyeron del set de entrenamiento variables posteriores a la originación del crédito (`saldo_mora`, `saldo_total`, días de atraso acumulados) para asegurar un modelo predictivo realista en producción.
+
 ---
 
-### 🔹 Avance 4: Despliegue con API (FastAPI) y Contenedorización (Docker)
-- **Despliegue de API Rest:** Se implementó `src/model_deploy.py` utilizando **FastAPI** y **Uvicorn**, exponiendo el endpoint `/predict` optimizado para recibir lotes de datos (*batch processing*) en formato JSON.
-- **Empaquetado en Docker:** Se creó el `Dockerfile` y `.dockerignore` para empaquetar el entorno, código y dependencias en un contenedor liviano y reproducible.
+## 📁 Arquitectura del Proyecto
+La estructura del proyecto cumple estrictamente con los estándares MLOps e integración continua requeridos:
 
-
-## 🛠️ Estructura del Repositorio
+```text
 PIM5_V1/
-│── Base_de_datos.xlsx          # Dataset original
-│── app.py                      # Aplicación interactiva Streamlit
-│── requirements.txt            # Dependencias del proyecto
-│── models/
-│   └── model.pkl               # Pipeline y Modelo seleccionado guardado
-└── src/
-│── cargar_datos.py         # Carga y limpieza inicial
-│── ft_engineering.py       # Pipeline de preprocesamiento y transformaciones
-│── model_training_evaluation.py # Entrenamiento y tabla comparativa
-└── model_monitoring.py     # Lógica estadística para Data Drift
+├── .github/
+│   └── workflows/
+│       └── sonarcloud.yml       # Integración CI con SonarCloud
+├── models/
+│   └── model.pkl                # Modelo entrenado empacado
+├── src/
+│   ├── cargar_datos.py          # Script de carga dinámica de datos
+│   ├── comprension_eda.ipynb    # Notebook de exploración de datos (EDA)
+│   ├── ft_engineering.py        # Pipelines de transformación y preprocess
+│   ├── model_training_evaluation.py # Entrenamiento y evaluación del modelo
+│   ├── model_deploy.py          # API REST desarrollada con FastAPI
+│   └── model_monitoring.py      # Monitoreo de Data Drift
+├── .dockerignore                # Exclusiones para la imagen Docker
+├── .gitignore                   # Exclusiones para el repositorio de Git
+├── app.py                       # Aplicación interactiva en Streamlit
+├── Base_de_datos.xlsx           # Dataset histórico de créditos
+├── Dockerfile                   # Configuración del contenedor Docker
+├── README.md                    # Documentación principal del proyecto
+├── requirements.txt             # Dependencias del entorno
+└── sonar-project.properties     # Configuración para análisis en SonarCloud
 
----
+🚀 Guía de Ejecución Local
+1. Requisitos Previos
+Python 3.11+ instalado.
 
-## 🚀 Cómo ejecutar la Aplicación
-1. Activar el entorno virtual:
-   .\venv\Scripts\activate
+Git y Docker Desktop (opcional para contenedorización).
 
-2. Instalar dependencias:
-    pip install -r requirements.txt
+2. Configuración del Entorno
+Bash
+# Clonar el repositorio
+git clone [https://github.com/camiconde/PIM5_V1.git](https://github.com/camiconde/PIM5_V1.git)
+cd PIM5_V1
 
-3. Ejecutar la aplicación Streamlit:
-    streamlit run app.py
+# Crear y activar entorno virtual
+python -m venv venv
+source venv/bin/activate  # En Linux/Mac
+# venv\Scripts\activate   # En Windows Power Shell
+
+# Instalar dependencias
+pip install -r requirements.txt
+3. Ejecución de la API REST (FastAPI)
+Bash
+uvicorn src.model_deploy:app --host 0.0.0.0 --port 8000 --reload
+Documentación Interactiva (Swagger UI): http://localhost:8000/docs
+
+Endpoint de Predicción en Lote: POST /predict
+
+4. Ejecución del Dashboard (Streamlit)
+Bash
+streamlit run app.py
+Accede a la interfaz web interactiva desde tu navegador en http://localhost:8501 para simular evaluaciones crediticias y visualizar el monitoreo del modelo.
+
+🐳 Ejecución con Docker
+Construir la imagen:
+Bash
+docker build -t riesgo-crediticio-api .
+Ejecutar el contenedor:
+Bash
+docker run -d -p 8000:8000 --name api_riesgo riesgo-crediticio-api
+
+🔍 Integración de MLOps y Calidad de Código (SonarCloud)
+El repositorio incluye integración continua (CI) mediante GitHub Actions y SonarCloud para auditar:
+
+Calidad y Mantenibilidad del Código: Evaluación constante de buenas prácticas en Python.
+
+Seguridad: Inspección de vulnerabilidades y buenas prácticas en contenedores Docker (ej. ejecución como usuario sin privilegios appuser).
+
+Duplicaciones y Estilo: Garantía de código limpio y modular.
