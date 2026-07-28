@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+pandas
+numpy
+scikit-learn
+joblib
+scipy
+matplotlib
+seaborn
+openpyxl
+streamlit
+fastapi
+uvicorn
+pydantic
